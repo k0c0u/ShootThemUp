@@ -2,8 +2,12 @@
 
 #include "Components/STUHealthComponent.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Camera/CameraShakeBase.h"
+#include "STUGameModeBase.h"
 
 USTUHealthComponent::USTUHealthComponent()
 {
@@ -14,6 +18,8 @@ void USTUHealthComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    check(MaxHealth > 0);
+    
     SetHealth(MaxHealth);
 
 	AActor* ComponentOwner = GetOwner();
@@ -33,20 +39,22 @@ void USTUHealthComponent::OnTakeAnyDamage(
 
     if (IsDead())
     {
+        Killed(InstigatedBy);
         OnDeath.Broadcast();
     }
     else if (AutoHeal)
     {
         GetWorld()->GetTimerManager().SetTimer(HealTimerHandle, this, &USTUHealthComponent::HealUpdate, HealUpdateTime, true, HealDelay);
     }
+
+    PlayCameraShake();
 }
 
 void USTUHealthComponent::HealUpdate()
 {
     SetHealth(Health + HealModifier);
-    OnHealthChanged.Broadcast(Health);
 
-    if (FMath::IsNearlyEqual(Health, MaxHealth) && GetWorld())
+    if (IsHealthFull() && GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(HealTimerHandle);
     }
@@ -54,6 +62,54 @@ void USTUHealthComponent::HealUpdate()
 
 void USTUHealthComponent::SetHealth(float NewHealth)
 {
-    Health = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
-    OnHealthChanged.Broadcast(Health);
+    const auto NextHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+    const auto HealthDelta = NextHealth - Health;
+        
+    Health = NextHealth;
+    OnHealthChanged.Broadcast(Health, HealthDelta);
+}
+
+bool USTUHealthComponent::TryToAddHealth(float HealthAmount)
+{
+    if(IsDead() || IsHealthFull()) return false;
+
+    SetHealth(Health + HealthAmount);
+    return true;
+}
+
+bool USTUHealthComponent::IsHealthFull() const
+{
+    return FMath::IsNearlyEqual(Health, MaxHealth);
+}
+
+void USTUHealthComponent::PlayCameraShake()
+{
+    if(IsDead()) return;
+
+    const auto Player = Cast<APawn>(GetOwner());
+    if(!IsValid(Player)) return;
+
+    const auto Controller = Player->GetController<APlayerController>();
+    if(!IsValid(Controller) || !IsValid(Controller->PlayerCameraManager)) return;
+
+    Controller->PlayerCameraManager->StartCameraShake(CameraShake.Get());
+}
+
+void USTUHealthComponent::Killed(AController* KillerController)
+{
+    if(!IsValid(GetWorld()))
+    {
+        return;
+    }
+    
+    const auto GameMode = Cast<ASTUGameModeBase>(GetWorld()->GetAuthGameMode());
+    if(!IsValid(GameMode))
+    {
+        return;
+    }
+
+    const auto Player = Cast<APawn>(GetOwner());
+    const auto VictimController = Player ? Player->Controller : nullptr;
+
+    GameMode->Killed(KillerController, VictimController);
 }

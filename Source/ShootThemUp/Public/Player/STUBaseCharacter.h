@@ -47,8 +47,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
     FVector2D LandedDamage = FVector2D(10.0f, 100.0f);
 
+    UPROPERTY(EditDefaultsOnly, Category = "Material")
+    FName MaterialColorName = "PaintColor";
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+    virtual void OnDeath();
 
 public:	
 
@@ -62,6 +67,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+    void SetPlayerColor(const FLinearColor& Color);
+
 private:
 
 	bool WantsToRun = false;
@@ -73,9 +80,9 @@ private:
     void OnStartRunning();
     void OnStopRunning();
 
-	void OnDeath();
+    void OnStartFire();
 
-	void OnHealthChanged(float Health);
+	void OnHealthChanged(float Health, float HealthDelta);
 
 	UFUNCTION()
     void OnGroundLanded(const FHitResult& Hit);

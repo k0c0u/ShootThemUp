@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "STUBaseWeapon.h"
 #include "Components/ActorComponent.h"
+#include "STUCoreTypes.h"
 #include "STUWeaponComponent.generated.h"
 
 class ASTUBaseWeapon;
@@ -17,22 +19,69 @@ public:
 	
 	USTUWeaponComponent();
 
-	void StartFire();
+	virtual void StartFire();
     void StopFire();
+    virtual void NextWeapon();
+    void Reload();
 
+    bool GetCurrentWeaponUIData(FWeaponUIData& UIData) const;
+    bool GetCurrentWeaponAmmoData(FAmmoData& AmmoData) const;
+
+    bool TryToAddAmmo(TSoftClassPtr<ASTUBaseWeapon> WeaponType, int32 ClipsAmount);
+
+    bool IsFiring() const;
+
+    bool NeedAmmo(TSoftClassPtr<ASTUBaseWeapon> WeaponType);
+    
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+    TArray<FWeaponData> WeaponData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-    TSubclassOf<ASTUBaseWeapon> WeaponClass;
+    FName WeponEquipSocketName = "WeaponSocket";
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-    FName WeponSocketPointName;
+    FName WeponArmorySocketName = "ArmorySocket";
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    UAnimMontage* EquipAnimMontage;
+
+    UPROPERTY()
+    ASTUBaseWeapon* CurrentWeapon = nullptr;
+
+    UPROPERTY()
+    TArray<ASTUBaseWeapon*> Weapons;
+    
+    int32 CurrentWeaponIndex = 0;
+    
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    bool CanFire() const;
+    bool CanEquip() const;
+    void EquipWeapon(int32 WeaponIndex);
 
 private:
-    UPROPERTY()
-    ASTUBaseWeapon* CurrentWeapon;
+	UPROPERTY()
+    UAnimMontage* CurrentReloadAnimMontage = nullptr;
+    
+	bool EquipAnimInProgress = false;
 
-    void SpawnWeapon();
+	bool ReloadAnimInProgress = false;
+
+    void SpawnWeapons();
+
+	void AttachWeaponToSocket(ASTUBaseWeapon* Weapon, USceneComponent* SceneComponent, const FName& SocketName);
+    
+	void PlayAnimMontage(UAnimMontage* Animation);
+
+	void InitAnimation();
+
+	void OnEquipFinished(USkeletalMeshComponent* MeshComponent);
+    void OnReloadFinished(USkeletalMeshComponent* MeshComponent);
+    
+    bool CanReload() const;
+
+    void OnClipEmpty(ASTUBaseWeapon* AmmoEmptyWeapon);
+    void ChangeClip();
 };

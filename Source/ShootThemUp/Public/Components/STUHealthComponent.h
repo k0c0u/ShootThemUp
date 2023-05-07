@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "STUCoreTypes.h"
 #include "STUHealthComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnDeathSignature);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float);
+class UCameraShakeBase; 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
@@ -24,7 +24,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
     bool IsDead() const {return FMath::IsNearlyZero(Health);}
 
+    UFUNCTION(BlueprintCallable, Category = "Health")
+    float GetHealthPercent() const {return Health / MaxHealth;}
+    
 	float GetHealth() const { return Health; }
+
+    bool TryToAddHealth(float HealthAmount);
+    bool IsHealthFull()  const;
 
 protected:
 
@@ -45,6 +51,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Heal", meta = (EditCondition = "AutoHeal "))
     float HealModifier = 5.0f;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+    TSoftClassPtr<UCameraShakeBase> CameraShake;
+    
 private:
 
 	float Health = 0.0f;
@@ -57,4 +66,8 @@ private:
 
 	UFUNCTION()
     void OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+    void PlayCameraShake();
+
+    void Killed(AController* KillerController);
 };

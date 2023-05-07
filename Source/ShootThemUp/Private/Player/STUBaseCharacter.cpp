@@ -12,7 +12,6 @@
 #include "Components/CapsuleComponent.h"
 
 
-
 // Sets default values
 ASTUBaseCharacter::ASTUBaseCharacter(const FObjectInitializer& ObjInit)
     : Super(ObjInit.SetDefaultSubobjectClass<USTUCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -40,8 +39,9 @@ void ASTUBaseCharacter::BeginPlay()
 
     check(HealthComponent);
     check(GetCharacterMovement());
-
-    OnHealthChanged(HealthComponent->GetHealth());
+    check(GetMesh());
+    
+    OnHealthChanged(HealthComponent->GetHealth(), 0.0f);
     HealthComponent->OnDeath.AddUObject(this, &ASTUBaseCharacter::OnDeath);
     HealthComponent->OnHealthChanged.AddUObject(this, &ASTUBaseCharacter::OnHealthChanged);
 
@@ -71,8 +71,21 @@ void ASTUBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASTUBaseCharacter::Jump);
     PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ASTUBaseCharacter::OnStartRunning);
     PlayerInputComponent->BindAction("Run", IE_Released, this, &ASTUBaseCharacter::OnStopRunning);
-    PlayerInputComponent->BindAction("Fire", IE_Pressed, WeaponComponent, &USTUWeaponComponent::StartFire);
+    PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::OnStartFire);
     PlayerInputComponent->BindAction("Fire", IE_Released, WeaponComponent, &USTUWeaponComponent::StopFire);
+    PlayerInputComponent->BindAction("NextWeapon", IE_Pressed, WeaponComponent, &USTUWeaponComponent::NextWeapon);
+    PlayerInputComponent->BindAction("Reload", IE_Pressed, WeaponComponent, &USTUWeaponComponent::Reload);
+}
+
+void ASTUBaseCharacter::SetPlayerColor(const FLinearColor& Color)
+{
+    const auto MaterialInst = GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
+    if(!IsValid(MaterialInst))
+    {
+        return;
+    }
+
+    MaterialInst->SetVectorParameterValue(MaterialColorName, Color);
 }
 
 void ASTUBaseCharacter::MoveForward(float Amount) 
@@ -80,6 +93,11 @@ void ASTUBaseCharacter::MoveForward(float Amount)
     IsMovingForward = Amount > 0.0f;
     if (Amount == 0.0f) return;
     AddMovementInput(GetActorForwardVector(), Amount);
+
+    if (IsRunning() && WeaponComponent->IsFiring())
+    {
+        WeaponComponent->StopFire();
+    }
 }
 
 void ASTUBaseCharacter::MoveRight(float Amount) 
@@ -91,11 +109,21 @@ void ASTUBaseCharacter::MoveRight(float Amount)
 void ASTUBaseCharacter::OnStartRunning()
 {
     WantsToRun = true;
+    if (IsRunning())
+    {
+        WeaponComponent->StopFire();
+    }
 }
 
 void ASTUBaseCharacter::OnStopRunning() 
 {
     WantsToRun = false;
+}
+
+void ASTUBaseCharacter::OnStartFire()
+{
+    if (IsRunning()) return;
+    WeaponComponent->StartFire();
 }
 
 bool ASTUBaseCharacter::IsRunning() const
@@ -116,17 +144,26 @@ float ASTUBaseCharacter::GetMovementDirection() const
 
 void ASTUBaseCharacter::OnDeath()
 {
-    PlayAnimMontage(DeathAnimMontage);
+    //PlayAnimMontage(DeathAnimMontage);
+
     GetCharacterMovement()->DisableMovement();
+
     SetLifeSpan(LifeSpanOnDeath);
+
     if (Controller)
     {
         Controller->ChangeState(NAME_Spectating);
     }
+
     GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+    WeaponComponent->StopFire();
+
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetMesh()->SetSimulatePhysics(true);
 }
 
-void ASTUBaseCharacter::OnHealthChanged(float Health) 
+void ASTUBaseCharacter::OnHealthChanged(float Health, float HealthDelta) 
 {
 
 }
