@@ -5,16 +5,17 @@
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/InteractInterface.h"
 #include "STUBasePickup.generated.h"
 
 class USphereComponent;
 
 UCLASS()
-class SHOOTTHEMUP_API ASTUBasePickup : public AActor
+class SHOOTTHEMUP_API ASTUBasePickup : public AActor, public IInteractInterface
 {
 	GENERATED_BODY()
 	
-public:	
+public:
 	
 	ASTUBasePickup();
     
@@ -24,10 +25,15 @@ public:
 
     bool CouldBeTaken() const;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settigns")
+    FText InteractName;
+
 
 protected:
 	
 	virtual void BeginPlay() override;
+
+    virtual FText GetInteractActorName_Implementation() override;
     
     UPROPERTY(VisibleAnywhere, Category = "Pickup")
     USphereComponent* CollisionComponent;

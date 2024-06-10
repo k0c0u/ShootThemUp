@@ -26,6 +26,11 @@ void ASTUBasePickup::BeginPlay()
     GenerateRotationYaw();
 }
 
+FText ASTUBasePickup::GetInteractActorName_Implementation()
+{
+    return InteractName;
+}
+
 void ASTUBasePickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

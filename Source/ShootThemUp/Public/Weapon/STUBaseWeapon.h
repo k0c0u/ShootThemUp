@@ -10,6 +10,25 @@ class USkeletalMeshComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
 
+USTRUCT(BlueprintType)
+struct FShootInfo
+{
+    GENERATED_BODY()
+
+    FShootInfo() : Location_Mul_10(FVector::ZeroVector), Direction(FVector::ZeroVector) {};
+
+    FShootInfo(FVector Location, FVector InDirection) : Location_Mul_10(Location * 10.f), Direction(InDirection) {};
+    
+    UPROPERTY()
+    FVector_NetQuantize100 Location_Mul_10;
+    
+    UPROPERTY()
+    FVector_NetQuantizeNormal Direction;
+
+    FVector GetLocation() const {return Location_Mul_10 * 0.1f;}
+    FVector GetDirection() const {return Direction;}
+};
+
 UCLASS()
 class SHOOTTHEMUP_API ASTUBaseWeapon : public AActor
 {
@@ -21,7 +40,9 @@ public:
 	FOnClipEmptySignature OnClipEmpty;
 
 	virtual void StartFire();
+
     virtual void StopFire();
+    
 
 	void ChangeClip();
     bool CanReload() const;
@@ -37,7 +58,27 @@ public:
     bool IsAmmoFull() const;
 
 protected:
+    virtual void BeginPlay() override;
+    virtual void MakeShot();
 
+    bool GetPlayerViewPoint(FVector& ViewLocation, FRotator& ViewRotation) const;
+
+    FVector GetMuzzleWorldLocation() const;
+
+    virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd, FVector& Direction) const;
+
+    void MakeHit(FHitResult& HitResult, const FVector& TraceStart, const FVector& TraceEnd);
+
+    void DecreaseAmmo();
+	
+    bool IsClipEmpty() const;
+   
+    void LogAmmo();
+
+    UNiagaraComponent* SpawnMuzzleFX();
+
+    
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USkeletalMeshComponent* WeaponMesh;
 
@@ -55,27 +96,9 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
     UNiagaraSystem* MuzzleFX;
-    
-	virtual void BeginPlay() override;
-	virtual void MakeShot();
-
-	bool GetPlayerViewPoint(FVector& ViewLocation, FRotator& ViewRotation) const;
-
-	FVector GetMuzzleWorldLocation() const;
-
-    virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const;
-
-    void MakeHit(FHitResult& HitResult, const FVector& TraceStart, const FVector& TraceEnd);
-
-	void DecreaseAmmo();
-	
-    bool IsClipEmpty() const;
-   
-    void LogAmmo();
-
-    UNiagaraComponent* SpawnMuzzleFX();
 
 private:
+    UPROPERTY(Replicated)
     FAmmoData CurrentAmmo;
 
     bool FireInProgress = false;

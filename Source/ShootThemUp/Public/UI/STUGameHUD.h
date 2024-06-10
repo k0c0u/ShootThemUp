@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "STUCoreTypes.h"
 #include "STUGameHUD.generated.h"
 
 
@@ -17,10 +18,21 @@ public:
     
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<UUserWidget> PlayerHUDWidgetClass;
+    TSoftClassPtr<UUserWidget> PlayerHUDWidgetClass;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
+    TSoftClassPtr<UUserWidget> PauseWidgetClass;
 
     virtual void BeginPlay() override;
     
 private:
     void DrawCrossHair();
+
+    UFUNCTION()
+    void OnMatchStateChanged(ESTUMatchState State);
+
+    UPROPERTY()
+    TMap<TEnumAsByte<ESTUMatchState>, UUserWidget*> GameWidgets;
+    
+    UPROPERTY()
+    TObjectPtr<UUserWidget> CurrentWidget = nullptr;
 };

@@ -8,19 +8,23 @@
 #include "TimerManager.h"
 #include "Camera/CameraShakeBase.h"
 #include "STUGameModeBase.h"
+#include "Net/UnrealNetwork.h"
 
 USTUHealthComponent::USTUHealthComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+    SetIsReplicatedByDefault(true);
 }
 
 void USTUHealthComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    check(MaxHealth > 0);
-    
-    SetHealth(MaxHealth);
+    if(GetOwner()->HasAuthority())
+    {
+        check(MaxHealth > 0);
+        SetHealth(MaxHealth);
+    }
 
 	AActor* ComponentOwner = GetOwner();
     if (ComponentOwner)
@@ -112,4 +116,11 @@ void USTUHealthComponent::Killed(AController* KillerController)
     const auto VictimController = Player ? Player->Controller : nullptr;
 
     GameMode->Killed(KillerController, VictimController);
+}
+
+void USTUHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(USTUHealthComponent, Health);
 }

@@ -10,6 +10,7 @@
 #include "GameFramework/Controller.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "Net/UnrealNetwork.h"
 
 
 DEFINE_LOG_CATEGORY_STATIC(LogBaseWeapon, All, All);
@@ -20,6 +21,8 @@ ASTUBaseWeapon::ASTUBaseWeapon()
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("WeaponMesh");
     SetRootComponent(WeaponMesh);
+    
+    SetReplicates(true);
 }
 
 void ASTUBaseWeapon::BeginPlay()
@@ -33,7 +36,7 @@ void ASTUBaseWeapon::BeginPlay()
     CurrentAmmo = DefaultAmmo;
 }
 
-void ASTUBaseWeapon::StartFire() 
+void ASTUBaseWeapon::StartFire()
 {
     FireInProgress = true;
 }
@@ -43,9 +46,8 @@ void ASTUBaseWeapon::StopFire()
     FireInProgress = false;
 }
 
-void ASTUBaseWeapon::MakeShot() 
+void ASTUBaseWeapon::MakeShot()
 {
-   
 }
 
 bool ASTUBaseWeapon::GetPlayerViewPoint(FVector& ViewLocation, FRotator& ViewRotation) const 
@@ -75,7 +77,7 @@ FVector ASTUBaseWeapon::GetMuzzleWorldLocation() const
     return WeaponMesh->GetSocketLocation(MuzzleSocketName);
 }
 
-bool ASTUBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const 
+bool ASTUBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd, FVector& Direction) const
 {
     FVector ViewLocation;
     FRotator ViewRotation;
@@ -127,7 +129,7 @@ bool ASTUBaseWeapon::IsAmmoFull() const
     return CurrentAmmo.Clips == DefaultAmmo.Clips && CurrentAmmo.Bullets == DefaultAmmo.Bullets;
 }
 
-void ASTUBaseWeapon::ChangeClip() 
+void ASTUBaseWeapon::ChangeClip()
 {
     if (!CurrentAmmo.Infinite)
     {
@@ -142,7 +144,7 @@ bool ASTUBaseWeapon::CanReload() const
     return CurrentAmmo.Bullets < DefaultAmmo.Bullets && CurrentAmmo.Clips > 0;
 }
 
-void ASTUBaseWeapon::LogAmmo() 
+void ASTUBaseWeapon::LogAmmo()
 {
     FString AmmoInfo = "Ammo: " + FString::FromInt(CurrentAmmo.Bullets) + " / ";
     AmmoInfo += CurrentAmmo.Infinite ? "Infinite" : FString::FromInt(CurrentAmmo.Clips);
@@ -185,4 +187,10 @@ UNiagaraComponent* ASTUBaseWeapon::SpawnMuzzleFX()
         FVector::ZeroVector,
         FRotator::ZeroRotator,
         EAttachLocation::SnapToTarget, true);
+}
+void ASTUBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ASTUBaseWeapon, CurrentAmmo);
 }

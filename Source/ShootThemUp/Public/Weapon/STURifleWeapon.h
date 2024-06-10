@@ -29,22 +29,30 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float BulletSpread = 1.5f; 
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, Category = "Weapon")
     float DamageAmount = 10.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
     UNiagaraSystem* TraceFX;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
-    FString TraceTargetName = "TraceTarget";
+    FName TraceTargetName = "TraceTarget";
     
     UPROPERTY(VisibleAnywhere, Category = "VFX")
     USTUWeaponFXComponent* WeaponFXComponent;
 
+    UPROPERTY(ReplicatedUsing=OnRep_LastShotInfo)
+    FShootInfo LastShotInfo;
+
+    UFUNCTION()
+    void OnRep_LastShotInfo();
+
     virtual void BeginPlay() override;
     
     virtual void MakeShot() override;
-    virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const override;
+    virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd, FVector& Direction) const override;
+    
+    ACharacter* GetOwnerCharacter() const;
 
 private:
     FTimerHandle ShotTimerHandle;

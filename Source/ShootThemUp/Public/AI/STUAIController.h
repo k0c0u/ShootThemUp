@@ -7,7 +7,8 @@
 #include "STUAIController.generated.h"
 
 
- class USTUAIPerceptionComponent;
+class USTUAIPerceptionComponent;
+class USTURespawnComponent;
  
 UCLASS()
 class SHOOTTHEMUP_API ASTUAIController : public AAIController
@@ -20,6 +21,9 @@ public:
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USTUAIPerceptionComponent* STUAIPerceptionComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
+    USTURespawnComponent* STURespawnComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     FName FocusOnKeyName = "EnemyActor";

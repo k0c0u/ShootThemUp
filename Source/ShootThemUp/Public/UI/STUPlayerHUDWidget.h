@@ -37,4 +37,11 @@ public:
 
 private:
     void OnHealthChanged(float Health, float HealthDelta);
+
+    UFUNCTION()
+    void OnReceiveControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
+    
+    TObjectPtr<USTUHealthComponent> HealthComponent;
+
+     TObjectPtr<USTUWeaponComponent> WeaponComponent;
 };

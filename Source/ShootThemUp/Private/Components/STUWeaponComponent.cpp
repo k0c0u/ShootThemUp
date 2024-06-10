@@ -8,6 +8,7 @@
 #include "Animation/STUReloadFinishedAnimNotify.h"
 #include "Animation/AnimUtils.h"
 #include "GameFramework/Character.h"
+#include "Net/UnrealNetwork.h"
 
 
 DEFINE_LOG_CATEGORY_STATIC(LogWeaponComponent, All, All);
@@ -17,6 +18,8 @@ constexpr static int32 WeaponNum = 2;
 USTUWeaponComponent::USTUWeaponComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+    SetIsReplicatedByDefault(true);
 }
 
 void USTUWeaponComponent::BeginPlay()
@@ -26,22 +29,30 @@ void USTUWeaponComponent::BeginPlay()
     checkf(WeaponData.Num() == WeaponNum, TEXT("Our character can hold only %i weapon items"), WeaponNum);
     
     CurrentWeaponIndex = 0;
-	SpawnWeapons();
-    EquipWeapon(CurrentWeaponIndex);
+
+    if (GetOwner()->HasAuthority())
+    {
+        SpawnWeapons();
+    }
     InitAnimation();
 }
 
 void USTUWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason) 
 {
     CurrentWeapon = nullptr;
-
-    for (const auto Weapon : Weapons)
+    if(Weapons.Num() > 0)
     {
-        Weapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        Weapon->Destroy();
+        for (const auto Weapon : Weapons)
+        {
+            if(IsValid(Weapon))
+            {
+                Weapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+                Weapon->Destroy();
+            }
+        }
+        Weapons.Empty();
     }
-
-    Weapons.Empty();
+   
 
     Super::EndPlay(EndPlayReason);
 }
@@ -65,6 +76,12 @@ void USTUWeaponComponent::SpawnWeapons()
 
         AttachWeaponToSocket(Weapon, Character->GetMesh(), WeponArmorySocketName);
     }
+    
+    if(Weapons.Num() > 0)
+    {
+       
+        OnRep_CurrentWeapon();
+    }
 }
 
 void USTUWeaponComponent::AttachWeaponToSocket(ASTUBaseWeapon* Weapon, USceneComponent* SceneComponent, const FName& SocketName)
@@ -76,7 +93,7 @@ void USTUWeaponComponent::AttachWeaponToSocket(ASTUBaseWeapon* Weapon, USceneCom
     Weapon->AttachToComponent(SceneComponent, AttachmentRules, SocketName);
 }
 
-void USTUWeaponComponent::EquipWeapon(int32 WeaponIndex) 
+void USTUWeaponComponent::EquipWeapon(int32 WeaponIndex)
 {
     if (WeaponIndex < 0 || WeaponIndex >= Weapons.Num())
     {
@@ -92,40 +109,143 @@ void USTUWeaponComponent::EquipWeapon(int32 WeaponIndex)
         AttachWeaponToSocket(CurrentWeapon, Character->GetMesh(), WeponArmorySocketName);
         CurrentWeapon->StopFire();
     }
-    
-    CurrentWeapon = Weapons[WeaponIndex];
 
-    //CurrentReloadAnimMintage = WeaponData[WeaponIndex].ReloadAnimMontage;
-    const auto CurrentWeaponData = WeaponData.FindByPredicate([&](const FWeaponData& Data) {  //
-        return Data.WeaponClass == CurrentWeapon->GetClass();                                   //
-    });
-    CurrentReloadAnimMontage = CurrentWeaponData ? CurrentWeaponData->ReloadAnimMontage : nullptr;
+    if(Weapons.IsValidIndex(WeaponIndex))
+    {
+        CurrentWeapon = Weapons[WeaponIndex];
+    }
+
+    if(WeaponData.Num() > 0 && IsValid(CurrentWeapon))
+    {
+        //CurrentReloadAnimMintage = WeaponData[WeaponIndex].ReloadAnimMontage;
+        const auto CurrentWeaponData = WeaponData.FindByPredicate([&](const FWeaponData& Data) {  //
+            return Data.WeaponClass == CurrentWeapon->GetClass();                                   //
+        });
+        
+        CurrentReloadAnimMontage = CurrentWeaponData ? CurrentWeaponData->ReloadAnimMontage : nullptr;
+    }
 
     AttachWeaponToSocket(CurrentWeapon, Character->GetMesh(), WeponEquipSocketName);
     EquipAnimInProgress = true;
     PlayAnimMontage(EquipAnimMontage);
 }
-
-void USTUWeaponComponent::StartFire() 
+void USTUWeaponComponent::StartFire()
 {
-    if (!CanFire()) return;
-    CurrentWeapon->StartFire();
+    if (!CanFire() || !IsValid(CurrentWeapon)) return;
+    if (GetOwner()->HasAuthority())
+    {
+        Multicast_StartFire();
+    }
+    else
+    {
+        CurrentWeapon->StartFire();
+        Server_StartFire();
+    }
+}
+
+void USTUWeaponComponent::Server_StartFire_Implementation()
+{
+    Multicast_StartFire();
+}
+
+void USTUWeaponComponent::Multicast_StartFire_Implementation()
+{
+    if (GetOwner()->HasAuthority() || !GetOwnerCharacter()->IsLocallyControlled())
+    {
+        CurrentWeapon->StartFire();
+    }
 }
 
 void USTUWeaponComponent::StopFire()
 {
     if (!CurrentWeapon) return;
-    CurrentWeapon->StopFire();
+    
+    if (GetOwner()->HasAuthority())
+    {
+        Multicast_StartFire();
+    }
+    else
+    {
+        CurrentWeapon->StopFire();
+        Server_StopFire();
+    }
 }
 
-void USTUWeaponComponent::NextWeapon() 
+void USTUWeaponComponent::Server_StopFire_Implementation()
+{
+    Multicast_StopFire();
+}
+
+void USTUWeaponComponent::Multicast_StopFire_Implementation()
+{
+    if (GetOwner()->HasAuthority() || !GetOwnerCharacter()->IsLocallyControlled())
+    {
+        CurrentWeapon->StopFire();
+    }
+}
+
+void USTUWeaponComponent::NextWeapon()
 {
     if (!CanEquip()) return;
-    CurrentWeaponIndex = (CurrentWeaponIndex + 1) % Weapons.Num();
-    EquipWeapon(CurrentWeaponIndex);
+    if (GetOwner()->HasAuthority())
+    {
+        Multicast_NextWeapon();
+    }
+    else
+    {
+        CurrentWeaponIndex = (CurrentWeaponIndex + 1) % Weapons.Num();
+        EquipWeapon(CurrentWeaponIndex);
+        Server_NextWeapon();
+    }
 }
 
-void USTUWeaponComponent::PlayAnimMontage(UAnimMontage* Animation) 
+void USTUWeaponComponent::Server_NextWeapon_Implementation()
+{
+    if (!CanEquip()) return;
+    Multicast_NextWeapon();
+}
+
+void USTUWeaponComponent::Multicast_NextWeapon_Implementation()
+{
+    if (GetOwner()->HasAuthority() || !GetOwnerCharacter()->IsLocallyControlled())
+    {
+        CurrentWeaponIndex = (CurrentWeaponIndex + 1) % Weapons.Num();
+        EquipWeapon(CurrentWeaponIndex);
+    }
+}
+
+bool USTUWeaponComponent::CanReload() const
+{
+    return CurrentWeapon && !EquipAnimInProgress && !ReloadAnimInProgress && CurrentWeapon->CanReload();
+}
+
+void USTUWeaponComponent::Reload()
+{
+    if (GetOwner()->HasAuthority())
+    {
+        Multicast_Reload();
+    }
+    else
+    {
+        ChangeClip();
+        Server_Reload();
+    }
+}
+
+void USTUWeaponComponent::Server_Reload_Implementation()
+{
+    Multicast_Reload();
+}
+
+void USTUWeaponComponent::Multicast_Reload_Implementation()
+{
+    if (GetOwner()->HasAuthority() || !GetOwnerCharacter()->IsLocallyControlled() || GetOwnerCharacter()->IsLocallyControlled() && !ReloadAnimInProgress)
+    {
+        ChangeClip();
+    }
+}
+
+void USTUWeaponComponent::PlayAnimMontage(UAnimMontage* Animation)
 {
     ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (!Character) return;
@@ -158,7 +278,7 @@ void USTUWeaponComponent::InitAnimation()
      }
 }
 
-void USTUWeaponComponent::OnEquipFinished(USkeletalMeshComponent* MeshComponent) 
+void USTUWeaponComponent::OnEquipFinished(USkeletalMeshComponent* MeshComponent)
 {
     const ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (!Character || MeshComponent != Character->GetMesh()) return;
@@ -183,22 +303,12 @@ bool USTUWeaponComponent::CanEquip() const
     return !EquipAnimInProgress && !ReloadAnimInProgress;
 }
 
-bool USTUWeaponComponent::CanReload() const
-{
-    return CurrentWeapon && !EquipAnimInProgress && !ReloadAnimInProgress && CurrentWeapon->CanReload();
-}
-
-void USTUWeaponComponent::Reload() 
-{
-    ChangeClip();
-}
-
 void USTUWeaponComponent::OnClipEmpty(ASTUBaseWeapon* AmmoEmptyWeapon)
 {
     if(!IsValid(AmmoEmptyWeapon)) return;
     if(CurrentWeapon == AmmoEmptyWeapon)
     {
-        ChangeClip();
+        Reload();
     }
     else
     {
@@ -212,7 +322,7 @@ void USTUWeaponComponent::OnClipEmpty(ASTUBaseWeapon* AmmoEmptyWeapon)
     }
 }
 
-void USTUWeaponComponent::ChangeClip() 
+void USTUWeaponComponent::ChangeClip()
 {
     if (!CanReload()) return;
     CurrentWeapon->StopFire();
@@ -220,6 +330,8 @@ void USTUWeaponComponent::ChangeClip()
     ReloadAnimInProgress = true;
     PlayAnimMontage(CurrentReloadAnimMontage);
 }
+
+
 
 bool USTUWeaponComponent::GetCurrentWeaponUIData(FWeaponUIData& UIData) const
 {
@@ -268,4 +380,24 @@ bool USTUWeaponComponent::NeedAmmo(TSoftClassPtr<ASTUBaseWeapon> WeaponType)
             }
     }
     return false;
+}
+
+ACharacter* USTUWeaponComponent::GetOwnerCharacter() const
+{
+    return Cast<ACharacter>(GetOwner());
+}
+
+void USTUWeaponComponent::OnRep_CurrentWeapon()
+{
+    EquipWeapon(CurrentWeaponIndex);
+}
+
+void USTUWeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(USTUWeaponComponent, CurrentWeapon);
+    DOREPLIFETIME(USTUWeaponComponent, Weapons);
+    DOREPLIFETIME(USTUWeaponComponent, CurrentWeaponIndex);
+    DOREPLIFETIME(USTUWeaponComponent, WeponArmorySocketName);
 }

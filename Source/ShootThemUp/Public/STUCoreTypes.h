@@ -2,6 +2,7 @@
 #include "STUCoreTypes.generated.h"
 
 class ASTUBaseWeapon;
+enum ESTUMatchState;
 
 //weapon
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnClipEmptySignature, ASTUBaseWeapon*);
@@ -9,6 +10,9 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnClipEmptySignature, ASTUBaseWeapon*);
 //health
 DECLARE_MULTICAST_DELEGATE(FOnDeathSignature);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedSignature, float, float);
+
+//MatchState
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMatchStateChangedSignature, ESTUMatchState);
 
 
 USTRUCT(BlueprintType)
@@ -103,4 +107,17 @@ struct FGameData
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     TArray<FLinearColor> TeamColors;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game", meta = (ClampMin = "1", ClampMax = "20", Units = seconds))
+    int32 RespawnTime = 2;
 };
+
+UENUM(BlueprintType, Blueprintable)
+enum ESTUMatchState
+{
+    WaitingToStart = 0 UMETA(DisplayName = "WaitingToStart "),
+    InProgress UMETA(DisplayName = "InProgress"),
+    Pause UMETA(DisplayName = "Pause "),
+    GameOver UMETA(DisplayName = "GameOver ")
+};
+

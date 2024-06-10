@@ -20,9 +20,36 @@ public:
 	USTUWeaponComponent();
 
 	virtual void StartFire();
+    UFUNCTION(Server, Reliable, Category = "Weapon")
+    void Server_StartFire();
+    void Server_StartFire_Implementation();
+    UFUNCTION(NetMulticast, Reliable, Category = "Weapon")
+    void Multicast_StartFire();
+    void Multicast_StartFire_Implementation();
+    
     void StopFire();
+    UFUNCTION(Server, Reliable, Category = "Weapon")
+    void Server_StopFire();
+    void Server_StopFire_Implementation();
+    UFUNCTION(NetMulticast, Reliable, Category = "Weapon")
+    void Multicast_StopFire();
+    void Multicast_StopFire_Implementation();
+    
     virtual void NextWeapon();
+    UFUNCTION(Server, Reliable, Category = "Weapon")
+    void Server_NextWeapon();
+    void Server_NextWeapon_Implementation();
+    UFUNCTION(NetMulticast, Reliable, Category = "Weapon")
+    void Multicast_NextWeapon();
+    void Multicast_NextWeapon_Implementation();
+    
     void Reload();
+    UFUNCTION(Server, Reliable, Category = "Weapon")
+    void Server_Reload();
+    void Server_Reload_Implementation();
+    UFUNCTION(NetMulticast, Reliable, Category = "Weapon")
+    void Multicast_Reload();
+    void Multicast_Reload_Implementation();
 
     bool GetCurrentWeaponUIData(FWeaponUIData& UIData) const;
     bool GetCurrentWeaponAmmoData(FAmmoData& AmmoData) const;
@@ -32,6 +59,11 @@ public:
     bool IsFiring() const;
 
     bool NeedAmmo(TSoftClassPtr<ASTUBaseWeapon> WeaponType);
+
+    ACharacter* GetOwnerCharacter() const;
+
+    UFUNCTION()
+    void OnRep_CurrentWeapon();
     
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
@@ -40,18 +72,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     FName WeponEquipSocketName = "WeaponSocket";
 
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Weapon")
     FName WeponArmorySocketName = "ArmorySocket";
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
     UAnimMontage* EquipAnimMontage;
 
-    UPROPERTY()
+    UPROPERTY(ReplicatedUsing=OnRep_CurrentWeapon)
     ASTUBaseWeapon* CurrentWeapon = nullptr;
 
-    UPROPERTY()
+    UPROPERTY(Replicated)
     TArray<ASTUBaseWeapon*> Weapons;
-    
+
+    UPROPERTY(Replicated)
     int32 CurrentWeaponIndex = 0;
     
     virtual void BeginPlay() override;
@@ -66,7 +99,7 @@ private:
     UAnimMontage* CurrentReloadAnimMontage = nullptr;
     
 	bool EquipAnimInProgress = false;
-
+    
 	bool ReloadAnimInProgress = false;
 
     void SpawnWeapons();

@@ -6,8 +6,7 @@
 #include "GameFramework/Character.h"
 #include "STUBaseCharacter.generated.h"
 
-class USpringArmComponent;
-class UCameraComponent;
+
 class USTUHealthComponent;
 class USTUWeaponComponent;
 
@@ -22,12 +21,6 @@ public:
 
 
 protected:
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-    USpringArmComponent* SpringArmComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-    UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USTUHealthComponent* HealthComponent;
@@ -58,29 +51,16 @@ protected:
 public:	
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-    bool IsRunning() const;
+    virtual bool IsRunning() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
     float GetMovementDirection() const;
 
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
     void SetPlayerColor(const FLinearColor& Color);
 
 private:
-
-	bool WantsToRun = false;
-    bool IsMovingForward = false;
-
-	void MoveForward(float Amount);
-    void MoveRight(float Amount);
-
-    void OnStartRunning();
-    void OnStopRunning();
-
-    void OnStartFire();
 
 	void OnHealthChanged(float Health, float HealthDelta);
 

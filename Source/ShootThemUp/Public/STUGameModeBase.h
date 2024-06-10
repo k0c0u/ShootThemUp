@@ -8,6 +8,7 @@
 #include "STUGameModeBase.generated.h"
 
 struct FStreamableHandle;
+
 class AAIController;
 
 
@@ -28,6 +29,13 @@ public:
     int32 GetCurrentRoundNum() const {return CurrentRound;}
     int32 GetRoundSecondsRemaining() const {return RoundCountDown;}
 
+    void RespawnRequest(AController* Controller);
+    
+    virtual bool SetPause(APlayerController* PC, FCanUnpause CanUnpauseDelegate) override;
+    virtual bool ClearPause() override;
+
+    FOnMatchStateChangedSignature OnMatchStateChanged;
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Game")
     TSoftClassPtr<AAIController> AIControllerClass;
@@ -38,13 +46,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Game")
     FGameData GameData;
 
-private:
-    TSharedPtr<FStreamableHandle> SpawnBotHandle;
-
-    int32 CurrentRound = 1;
-    int32 RoundCountDown = 0;
-    FTimerHandle GameRoundTimerHandle;
     
+
+private:
     void SpawnBots();
     void StartRound();
     void GameTimerUpdate();
@@ -57,4 +61,19 @@ private:
     void SetPlayerColor(AController* Controller);
 
     void LogPlayerInfo();
+
+    void StartRespawn(AController* Controller);
+
+    void GameOver();
+
+    void SetMatchState(ESTUMatchState State);
+
+private:
+    TSharedPtr<FStreamableHandle> SpawnBotHandle;
+
+    int32 CurrentRound = 1;
+    int32 RoundCountDown = 0;
+    FTimerHandle GameRoundTimerHandle;
+
+    ESTUMatchState MatchState = ESTUMatchState::WaitingToStart;
 };

@@ -7,22 +7,26 @@
 
 int32 USTUGameDataWidget::GetKillsNum() const
 {
-    return 0;
+    const auto* PlayerState = GetSTUPlayerState();
+    return PlayerState ? PlayerState->GetKillsNum() : 0;
 }
 
 int32 USTUGameDataWidget::GetCurrentRoundNum() const
 {
-    return 0;
+    const auto* GameMode = GetSTUGameMode();
+    return GameMode ? GameMode->GetCurrentRoundNum() : 0;
 }
 
 int32 USTUGameDataWidget::GetTotalRoundsNum() const
 {
-    return 0;
+    const auto* GameMode = GetSTUGameMode();
+    return GameMode ? GameMode->GetGameData().RoundsNum : 0;
 }
 
 int32 USTUGameDataWidget::GetRoundSecondsRemaining() const
 {
-    return 0;
+    const auto* GameMode = GetSTUGameMode();
+    return GameMode ? GameMode->GetGameData().RoundTime : 0;
 }
 
 ASTUGameModeBase* USTUGameDataWidget::GetSTUGameMode() const

@@ -4,12 +4,17 @@
 #include "STUGameModeBase.h"
 
 #include "AIController.h"
+#include "EngineUtils.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "Player/STUPlayerController.h"
 #include "Player/STUBaseCharacter.h"
 #include "UI/STUGameHUD.h"
 #include "Player/STUPlayerState.h"
+#include "STURespawnComponent.h"
+#include "STUUtils.h"
+
+constexpr static int32 MinRoundTimeForRespawn = 10;
 
 ASTUGameModeBase::ASTUGameModeBase() 
 {
@@ -31,14 +36,15 @@ void ASTUGameModeBase::StartPlay()
     
     FStreamableManager& AssetLoader = UAssetManager::GetStreamableManager();
     SpawnBotHandle = AssetLoader.RequestAsyncLoad(AIControllerClass.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::SpawnBots));
-    
+
+    SetMatchState(ESTUMatchState::InProgress);
 }
 
 UClass* ASTUGameModeBase::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-    if(IsValid(InController) && InController->IsA<AAIController>())
+    if(IsValid(InController) && InController->IsA<AAIController>() && !AICPawnClass.IsNull())
     {
-        return AICPawnClass.Get();
+        return AICPawnClass.LoadSynchronous();
     }
     return Super::GetDefaultPawnClassForController_Implementation(InController);
 }
@@ -57,6 +63,34 @@ void ASTUGameModeBase::Killed(AController* KillerController, AController* Victim
     {
         VictimPlayerState->AddDeath();
     }
+
+    StartRespawn(VictimController);
+}
+
+void ASTUGameModeBase::RespawnRequest(AController* Controller)
+{
+    ResetOnePlayer(Controller);
+}
+
+bool ASTUGameModeBase::SetPause(APlayerController* PC, FCanUnpause CanUnpauseDelegate)
+{
+    const auto PauseSet = Super::SetPause(PC, CanUnpauseDelegate);
+    if(PauseSet)
+    {
+        SetMatchState(ESTUMatchState::Pause);
+    }
+    
+    return PauseSet;
+}
+
+bool ASTUGameModeBase::ClearPause()
+{
+    const auto PauseSet =  Super::ClearPause();
+    if(PauseSet)
+    {
+        SetMatchState(ESTUMatchState::InProgress);
+    }
+    return PauseSet;
 }
 
 void ASTUGameModeBase::SpawnBots()
@@ -107,7 +141,7 @@ void ASTUGameModeBase::GameTimerUpdate()
         }
         else
         {
-            LogPlayerInfo();
+            GameOver();
         }
     }
 }
@@ -221,4 +255,43 @@ void ASTUGameModeBase::LogPlayerInfo()
 
         PlayerState->LogInfo();
     }
+}
+
+void ASTUGameModeBase::StartRespawn(AController* Controller)
+{
+    const auto RespawnAvailable = RoundCountDown > MinRoundTimeForRespawn + GameData.RespawnTime;
+    if(!RespawnAvailable) return;
+    
+    const auto RespawnComponent = STUUtils::GetSTUPlayerComponent<USTURespawnComponent>(Controller);
+    if(!IsValid(RespawnComponent)) return;
+
+    RespawnComponent->Respawn(GameData.RespawnTime);
+    
+}
+
+void ASTUGameModeBase::GameOver()
+{
+    LogPlayerInfo();
+
+    for(auto Pawn : TActorRange<APawn>(GetWorld()))
+    {
+        if(IsValid(Pawn))
+        {
+            Pawn->TurnOff();
+            Pawn->DisableInput(nullptr);
+        }
+    }
+
+    SetMatchState(ESTUMatchState::GameOver);
+}
+
+void ASTUGameModeBase::SetMatchState(ESTUMatchState State)
+{
+    if(MatchState == State)
+    {
+        return;
+    }
+
+    MatchState = State;
+    OnMatchStateChanged.Broadcast(State);
 }
