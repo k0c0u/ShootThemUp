@@ -68,10 +68,8 @@ protected:
     
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     void OnRep_Health();
-    virtual void OnRep_Health_Implementation()
-    {
-        OnFloatHealthChanged.Broadcast(Health);
-    }
+    virtual void OnRep_Health_Implementation();
+   
     
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Health)

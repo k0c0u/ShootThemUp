@@ -20,16 +20,12 @@ void USTUHealthComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if(GetOwner()->HasAuthority())
+    if(IsValid (GetOwner()) && GetOwner()->HasAuthority())
     {
         check(MaxHealth > 0);
         SetHealth(MaxHealth);
-    }
-
-	AActor* ComponentOwner = GetOwner();
-    if (ComponentOwner)
-    {
-        ComponentOwner->OnTakeAnyDamage.AddDynamic(this, &USTUHealthComponent::OnTakeAnyDamage);
+        
+        GetOwner()->OnTakeAnyDamage.AddDynamic(this, &USTUHealthComponent::OnTakeAnyDamage);
     }
 }
 
@@ -123,4 +119,9 @@ void USTUHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(USTUHealthComponent, Health);
+}
+
+void USTUHealthComponent::OnRep_Health_Implementation()
+{
+    OnFloatHealthChanged.Broadcast(Health);
 }

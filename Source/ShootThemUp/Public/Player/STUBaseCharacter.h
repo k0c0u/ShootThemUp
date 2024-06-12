@@ -45,8 +45,11 @@ protected:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+    
     virtual void OnDeath();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_OnDeath();
 
 public:	
 

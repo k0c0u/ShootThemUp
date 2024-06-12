@@ -74,8 +74,12 @@ float ASTUBaseCharacter::GetMovementDirection() const
 
 void ASTUBaseCharacter::OnDeath()
 {
-    //PlayAnimMontage(DeathAnimMontage);
+    Multicast_OnDeath();
+}
 
+void ASTUBaseCharacter::Multicast_OnDeath_Implementation()
+{
+    //PlayAnimMontage(DeathAnimMontage);
     GetCharacterMovement()->DisableMovement();
 
     SetLifeSpan(LifeSpanOnDeath);
