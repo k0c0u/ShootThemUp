@@ -133,7 +133,10 @@ FRotator ASTUPlayerCharacter::GetPlayerControlRotation()
 {
     if(HasAuthority() || IsLocallyControlled())
     {
-        AimRotation = GetController()->GetControlRotation();
+        if(IsValid(GetController()))
+        {
+            AimRotation = GetController()->GetControlRotation();
+        }
     }
     return AimRotation;
 }
