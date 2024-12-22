@@ -44,9 +44,9 @@ void ASTUPlayerController::OnPauseGame()
     GetWorld()->GetAuthGameMode()->SetPause(this);
 }
 
-void ASTUPlayerController::OnMatchStateChanged(ESTUMatchState State)
+void ASTUPlayerController::OnMatchStateChanged(EStuMatchState State)
 {
-    if(State == ESTUMatchState::InProgress)
+    if(State == EStuMatchState::InProgress)
     {
         SetInputMode(FInputModeGameOnly());
         bShowMouseCursor = false;

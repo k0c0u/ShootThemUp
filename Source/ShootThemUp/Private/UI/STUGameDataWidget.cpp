@@ -36,5 +36,5 @@ ASTUGameModeBase* USTUGameDataWidget::GetSTUGameMode() const
 
 ASTUPlayerState* USTUGameDataWidget::GetSTUPlayerState() const
 {
-    return GetOwningPlayer() ? Cast<ASTUPlayerState>(GetOwningPlayer()) : nullptr;
+    return GetOwningPlayer()->GetPlayerState<ASTUPlayerState>();
 }

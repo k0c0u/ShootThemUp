@@ -27,5 +27,5 @@ private:
     void OnPauseGame();
     
     UFUNCTION()
-    void OnMatchStateChanged(ESTUMatchState State);
+    void OnMatchStateChanged(EStuMatchState State);
 };

@@ -2,12 +2,15 @@
 
 
 #include "Player/STUBaseCharacter.h"
+
+#include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
 #include "Components/STUCharacterMovementComponent.h"
 #include "Components/STUHealthComponent.h"
 #include "Components/STUWeaponComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "Engine/DamageEvents.h"
+#include "GameFramework/Character.h"
 
 
 // Sets default values
@@ -27,8 +30,6 @@ void ASTUBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
     check(HealthComponent);
-    check(GetCharacterMovement());
-    check(GetMesh());
     
     OnHealthChanged(HealthComponent->GetHealth(), 0.0f);
 
@@ -108,6 +109,7 @@ void ASTUBaseCharacter::OnGroundLanded(const FHitResult& Hit)
     if (FallVelocityZ < LandedDamageVelocity.X) return;
 
     const auto FallDamage = FMath::GetMappedRangeValueClamped(LandedDamageVelocity, LandedDamage, FallVelocityZ);
-    TakeDamage(FallDamage, FDamageEvent{}, nullptr, nullptr);
+
+    TakeDamage(FallDamage, FDamageEvent(), nullptr, nullptr);
 }
 

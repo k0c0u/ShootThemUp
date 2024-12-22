@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "GameFram ework/Character.h"
+#include "GameFramework/Character.h"
 #include "STUBaseCharacter.generated.h"
 
 
@@ -50,7 +50,7 @@ protected:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_OnDeath();
 
-public:	
+public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
     virtual bool IsRunning() const;

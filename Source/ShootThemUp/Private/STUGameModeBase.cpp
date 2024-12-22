@@ -37,7 +37,7 @@ void ASTUGameModeBase::StartPlay()
     FStreamableManager& AssetLoader = UAssetManager::GetStreamableManager();
     SpawnBotHandle = AssetLoader.RequestAsyncLoad(AIControllerClass.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::SpawnBots));
 
-    SetMatchState(ESTUMatchState::InProgress);
+    SetMatchState(EStuMatchState::InProgress);
 }
 
 UClass* ASTUGameModeBase::GetDefaultPawnClassForController_Implementation(AController* InController)
@@ -77,7 +77,7 @@ bool ASTUGameModeBase::SetPause(APlayerController* PC, FCanUnpause CanUnpauseDel
     const auto PauseSet = Super::SetPause(PC, CanUnpauseDelegate);
     if(PauseSet)
     {
-        SetMatchState(ESTUMatchState::Pause);
+        SetMatchState(EStuMatchState::Pause);
     }
     
     return PauseSet;
@@ -88,7 +88,7 @@ bool ASTUGameModeBase::ClearPause()
     const auto PauseSet =  Super::ClearPause();
     if(PauseSet)
     {
-        SetMatchState(ESTUMatchState::InProgress);
+        SetMatchState(EStuMatchState::InProgress);
     }
     return PauseSet;
 }
@@ -282,10 +282,10 @@ void ASTUGameModeBase::GameOver()
         }
     }
 
-    SetMatchState(ESTUMatchState::GameOver);
+    SetMatchState(EStuMatchState::GameOver);
 }
 
-void ASTUGameModeBase::SetMatchState(ESTUMatchState State)
+void ASTUGameModeBase::SetMatchState(EStuMatchState State)
 {
     if(MatchState == State)
     {

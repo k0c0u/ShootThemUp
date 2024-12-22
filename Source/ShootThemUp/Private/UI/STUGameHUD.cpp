@@ -22,8 +22,8 @@ void ASTUGameHUD::BeginPlay()
         return;
     }
     
-    GameWidgets.Add(ESTUMatchState::InProgress,CreateWidget<UUserWidget>(GetWorld(), PlayerHUDWidgetClass.LoadSynchronous()));
-    GameWidgets.Add(ESTUMatchState::Pause, CreateWidget<UUserWidget>(GetWorld(), PauseWidgetClass.LoadSynchronous()));
+    GameWidgets.Add(EStuMatchState::InProgress,CreateWidget<UUserWidget>(GetWorld(), PlayerHUDWidgetClass.LoadSynchronous()));
+    GameWidgets.Add(EStuMatchState::Pause, CreateWidget<UUserWidget>(GetWorld(), PauseWidgetClass.LoadSynchronous()));
 
     for(auto GameWidgetPair : GameWidgets)
     {
@@ -52,7 +52,7 @@ void ASTUGameHUD::DrawCrossHair()
    DrawLine(Center.Min, Center.Max - HalfLineSize, Center.Min, Center.Max + HalfLineSize, LineColor, LineChickness);
 }
 
-void ASTUGameHUD::OnMatchStateChanged(ESTUMatchState State)
+void ASTUGameHUD::OnMatchStateChanged(EStuMatchState State)
 {
     //UE_LOG(LogTemp, Display, TEXT("Match state changed: %s"),*UEnum::GetValueAsString(State));
 

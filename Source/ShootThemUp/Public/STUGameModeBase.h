@@ -66,7 +66,7 @@ private:
 
     void GameOver();
 
-    void SetMatchState(ESTUMatchState State);
+    void SetMatchState(EStuMatchState State);
 
 private:
     TSharedPtr<FStreamableHandle> SpawnBotHandle;
@@ -75,5 +75,5 @@ private:
     int32 RoundCountDown = 0;
     FTimerHandle GameRoundTimerHandle;
 
-    ESTUMatchState MatchState = ESTUMatchState::WaitingToStart;
+    EStuMatchState MatchState = EStuMatchState::WaitingToStart;
 };

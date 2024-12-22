@@ -2,7 +2,6 @@
 #include "STUCoreTypes.generated.h"
 
 class ASTUBaseWeapon;
-enum ESTUMatchState;
 
 //weapon
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnClipEmptySignature, ASTUBaseWeapon*);
@@ -12,7 +11,7 @@ DECLARE_MULTICAST_DELEGATE(FOnDeathSignature);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedSignature, float, float);
 
 //MatchState
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnMatchStateChangedSignature, ESTUMatchState);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMatchStateChangedSignature, EStuMatchState);
 
 
 USTRUCT(BlueprintType)
@@ -113,7 +112,7 @@ struct FGameData
 };
 
 UENUM(BlueprintType, Blueprintable)
-enum ESTUMatchState
+enum EStuMatchState : uint8
 {
     WaitingToStart = 0 UMETA(DisplayName = "WaitingToStart "),
     InProgress UMETA(DisplayName = "InProgress"),

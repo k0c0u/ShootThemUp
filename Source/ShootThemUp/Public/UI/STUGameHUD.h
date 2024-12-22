@@ -28,10 +28,10 @@ private:
     void DrawCrossHair();
 
     UFUNCTION()
-    void OnMatchStateChanged(ESTUMatchState State);
+    void OnMatchStateChanged(EStuMatchState State);
 
     UPROPERTY()
-    TMap<TEnumAsByte<ESTUMatchState>, UUserWidget*> GameWidgets;
+    TMap<TEnumAsByte<EStuMatchState>, UUserWidget*> GameWidgets;
     
     UPROPERTY()
     TObjectPtr<UUserWidget> CurrentWidget = nullptr;

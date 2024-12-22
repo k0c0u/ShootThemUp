@@ -9,7 +9,7 @@ public class ShootThemUpTarget : TargetRules
 	{
 		Type = TargetType.Game;
        
-        DefaultBuildSettings = BuildSettingsVersion.V5;
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
 
         IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 
