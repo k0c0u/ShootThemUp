@@ -40,8 +40,7 @@ void ASTUProjectile::BeginPlay()
     SetLifeSpan(LifeSeconds);
 }
 
-void ASTUProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ASTUProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
     if (!GetWorld()) return;
 

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Player/STUBaseCharacter.h"
 #include "STUPlayerCharacter.generated.h"
 

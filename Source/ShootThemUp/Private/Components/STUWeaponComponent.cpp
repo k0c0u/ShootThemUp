@@ -138,9 +138,10 @@ void USTUWeaponComponent::StartFire()
     }
     else
     {
-        CurrentWeapon->StartFire();
+        
         Server_StartFire();
     }
+    CurrentWeapon->StartFire();
 }
 
 void USTUWeaponComponent::Server_StartFire_Implementation()
@@ -166,9 +167,10 @@ void USTUWeaponComponent::StopFire()
     }
     else
     {
-        CurrentWeapon->StopFire();
+        
         Server_StopFire();
     }
+    CurrentWeapon->StopFire();
 }
 
 void USTUWeaponComponent::Server_StopFire_Implementation()
