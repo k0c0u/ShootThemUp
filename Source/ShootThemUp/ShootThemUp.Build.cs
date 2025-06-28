@@ -16,11 +16,16 @@ public class ShootThemUp : ModuleRules
 		"InputCore",
 		"Niagara",
 		"PhysicsCore",
-		"GameplayTasks",
 		"NavigationSystem",
+		"EnhancedInput",
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"GameplayAbilities",
+			"GameplayTasks",
+			"GameplayTags"
+		});
 
 		PublicIncludePaths.AddRange(new string[] 
 		{ 
@@ -37,6 +42,7 @@ public class ShootThemUp : ModuleRules
 		"ShootThemUP/Public/AI/Services",
 		"ShootThemUP/Public/AI/Decorators",
 		"ShootThemUP/Public/AI/EQS",
+		"ShootThemUP/Public/",
 		});
 
 		// Uncomment if you are using Slate UI
